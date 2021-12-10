@@ -8,7 +8,49 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 
 from customers.managers import CustomerManager
+from core.models import BaseAbstractModel
+from phonenumber_field.modelfields import PhoneNumberField
 
+
+
+class Country(BaseAbstractModel):
+    name = models.CharField(max_length=20, verbose_name=_("name"), blank=True)
+
+    class Meta:
+        verbose_name = _("city")
+        verbose_name_plural = _("cities")
+
+    def __str__(self):
+        return f"{self.name}"
+
+class City(BaseAbstractModel):
+    name = models.CharField(max_length=20, verbose_name=_("name"), blank=True)
+    country = models.ForeignKey(Country,verbose_name=_("country"),on_delete=models.DO_NOTHING)
+
+    class Meta:
+        verbose_name = _("city")
+        verbose_name_plural = _("cities")
+
+    def __str__(self):
+        return f"{self.name}"
+
+
+class Address(BaseAbstractModel):
+    name = models.CharField(max_length=50, verbose_name=_("name"), blank=True)
+    full_name = models.CharField(max_length=200, verbose_name=_("full name"), blank=True)
+    line1 = models.TextField(max_length=200,verbose_name=_("line 1"), blank=False)
+    line2 = models.TextField(max_length=200,verbose_name=_("line 2"), blank=True)
+    phone = PhoneNumberField()
+    district = models.CharField(max_length=50,verbose_name=_("district"))
+    postcode = models.PositiveBigIntegerField(verbose_name=_("postcode"))
+    city = models.ForeignKey(City,verbose_name=_("city") ,on_delete=models.DO_NOTHING)
+
+    class Meta:
+        verbose_name = _("address")
+        verbose_name_plural = _("adresses")
+
+    def __str__(self):
+        return f"{self.name}"
 
 class Customer(AbstractBaseUser, PermissionsMixin):
     """
@@ -25,6 +67,7 @@ class Customer(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
         _("email address"), unique=True, validators=[username_validator]
     )
+    address = models.OneToOneField(Address,on_delete=models.CASCADE,)
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
